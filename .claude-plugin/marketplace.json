@@ -9,6 +9,11 @@
       "name": "rewrite-prompt",
       "source": "./rewrite-prompt",
       "description": "Ctrl+P rewrites the draft in the prompt box before you send it"
+    },
+    {
+      "name": "write-for-me",
+      "source": "./write-for-me",
+      "description": "Ctrl+Y writes your next prompt from the conversation so far; a draft in the box is used as a hint"
     }
   ]
 }

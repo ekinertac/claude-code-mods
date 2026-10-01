@@ -1,0 +1,6 @@
+{
+  "name": "write-for-me",
+  "version": "0.1.0",
+  "description": "Ctrl+Y writes your next prompt from the conversation so far; a draft in the box is used as a hint",
+  "author": { "name": "ekinertac" }
+}
