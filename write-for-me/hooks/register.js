@@ -1,14 +1,14 @@
-// write-for-me: Ctrl+Y writes the next prompt for you, from the conversation so far, into the prompt box.
+// write-for-me: Ctrl+N writes the next prompt for you, from the conversation so far, into the prompt box.
 //
 // Empty box: the model proposes the most likely next message. Text in the box: it is treated as a
 // hint ("tests too", "do the second option") and expanded into a full prompt using the conversation.
 // Nothing is sent; the result lands in the box for editing, and ctrl+_ (chat:undo) restores the hint.
 //
 // Why a Button: no keybinding action runs a mod command. A Button's `action` is pressed by whatever
-// chord the person bound to that engine action, so keybindings.json maps ctrl+y to
+// chord the person bound to that engine action, so keybindings.json maps ctrl+n to
 // app:toggleDiffPreSession (inert outside the diff panel) and this Button answers it. rewrite-prompt
 // uses app:toggleDiffNoiseFilter the same way; the two must not share an action.
-// Setup: keybindings.json (Global: "ctrl+y": "app:toggleDiffPreSession") and the plugin loaded.
+// Setup: keybindings.json (Global: "ctrl+n": "app:toggleDiffPreSession") and the plugin loaded.
 // Depends on: $.session.messages, $.prompt.read/fill, $.model.complete (the session's plan), $.ui.
 
 const SYSTEM =
