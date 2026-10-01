@@ -1,0 +1,14 @@
+{
+  "name": "ekinertac-mods",
+  "owner": {
+    "name": "ekinertac"
+  },
+  "description": "Claude Code mods by ekinertac",
+  "plugins": [
+    {
+      "name": "rewrite-prompt",
+      "source": "./rewrite-prompt",
+      "description": "Ctrl+P rewrites the draft in the prompt box before you send it"
+    }
+  ]
+}

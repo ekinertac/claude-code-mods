@@ -1,0 +1,6 @@
+{
+  "name": "rewrite-prompt",
+  "version": "0.1.0",
+  "description": "Ctrl+P rewrites the draft in the prompt box before you send it",
+  "author": { "name": "ekinertac" }
+}
