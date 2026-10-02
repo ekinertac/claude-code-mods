@@ -14,11 +14,6 @@
       "name": "write-for-me",
       "source": "./write-for-me",
       "description": "Ctrl+N writes your next prompt from the conversation so far; a draft in the box is used as a hint"
-    },
-    {
-      "name": "spinner-toons",
-      "source": "./spinner-toons",
-      "description": "Replaces the spinner word with a one-line emoji cartoon of what the main agent is doing"
     }
   ]
 }

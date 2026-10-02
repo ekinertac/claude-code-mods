@@ -1,7 +1,0 @@
-{
-  "name": "spinner-toons",
-  "version": "0.1.0",
-  "description": "Replaces the spinner word with a one-line emoji cartoon of what the main agent is doing, drawn by a model in real time",
-  "author": { "name": "ekinertac" },
-  "types": "./types/index.d.ts"
-}
