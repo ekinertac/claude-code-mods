@@ -1,0 +1,6 @@
+{
+  "name": "prompt-box",
+  "version": "0.1.0",
+  "description": "Draws your own prompts in the scrollback inside a thick colored box, so they are easy to find when you scroll",
+  "author": { "name": "ekinertac" }
+}

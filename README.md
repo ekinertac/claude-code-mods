@@ -4,6 +4,7 @@ Claude Code mods I use daily.
 
 - `rewrite-prompt`: press Ctrl+P and the draft in the prompt box is rewritten in place by a model (Sonnet, on your plan). Nothing is sent until you press Enter, and Ctrl+_ undoes it.
 - `write-for-me`: press Ctrl+N and the next prompt is written for you from the last 12 messages of the conversation. If the box has text, it is used as a hint ("tests too") and expanded. Nothing is sent, and Ctrl+_ undoes it.
+- `prompt-box`: the prompts you type are drawn in the scrollback inside a thick cyan box instead of one `> text` line. Task notifications and messages from other sessions keep their normal rows. No key binding needed.
 
 ## Setup
 
@@ -11,6 +12,7 @@ Claude Code mods I use daily.
 claude plugin marketplace add ekinertac/claude-code-mods
 claude plugin install rewrite-prompt@ekinertac-mods
 claude plugin install write-for-me@ekinertac-mods
+claude plugin install prompt-box@ekinertac-mods
 ```
 
 Then bind the keys. Add these to the `Global` block of `~/.claude/keybindings.json` and start a new session:
