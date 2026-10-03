@@ -7,6 +7,8 @@
 // The chevron sits in its own column, so wrapped and multi-line prompts line up under the first
 // character of the text instead of under the chevron.
 // The text is drawn as given and wraps; the stored message and what the model reads do not change.
+// Pasted text is stored wrapped in <pasted_content id="..."> tags for the model; they are noise to
+// a reader, so they are removed from the drawn text only.
 // Constraint: the box costs two extra rows per prompt (top and bottom border), and it also shows in
 // the ctrl+o transcript.
 
@@ -15,6 +17,13 @@ import type { Register } from 'claude-code'
 const BORDER = 'bold' // thick lines
 const COLOR = 'cyan'
 const CHEVRON = '❯'
+
+const PASTE_TAG = /<\/?pasted_content[^>]*>/g
+
+// Tags out, then the blank lines they leave: trim the ends and keep at most one empty line between.
+function readable(text: string): string {
+  return text.replace(PASTE_TAG, '').trim().replace(/\n{3,}/g, '\n\n')
+}
 
 export const register: Register = on => {
   on('ui.render', { component: 'UserMessage', props: { origin: { kind: 'composer' } } }, ($, e) => {
@@ -27,7 +36,7 @@ export const register: Register = on => {
           </Text>
         </Box>
         <Box flexGrow={1} flexShrink={1}>
-          <Text wrap="wrap">{e.props.text}</Text>
+          <Text wrap="wrap">{readable(e.props.text)}</Text>
         </Box>
       </Box>
     )

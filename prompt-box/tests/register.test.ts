@@ -40,3 +40,12 @@ test('the chevron is drawn once, before the text, and multi-line text stays whol
   expect(tree.split('❯').length - 1).toBe(1)
   expect(tree.indexOf('❯')).toBeLessThan(tree.indexOf('line one'))
 })
+
+test('pasted-content tags are removed from the drawn text, the pasted lines stay', async ($, on) => {
+  on('ui.render', () => ({ type: 'Text', props: {}, children: [''] }))
+  const raw = 'see\n\n<pasted_content id="76e5">\nline 1\nline 2\n</pasted_content id="76e5">\n\n and my words'
+  const tree = seen(await $.ui.render(ROW({ kind: 'composer' }, raw)))
+  expect(tree).not.toContain('pasted_content')
+  expect(tree).toContain('line 1\\nline 2')
+  expect(tree).toContain('and my words')
+})
