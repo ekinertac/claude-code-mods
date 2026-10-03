@@ -31,3 +31,12 @@ test('a long prompt is passed whole and wraps', async ($, on) => {
   expect(tree).toContain(long)
   expect(tree).toContain('"wrap":"wrap"')
 })
+
+test('the chevron is drawn once, before the text, and multi-line text stays whole', async ($, on) => {
+  on('ui.render', () => ({ type: 'Text', props: {}, children: [''] }))
+  const text = 'line one\nline two'
+  const tree = seen(await $.ui.render(ROW({ kind: 'composer' }, text)))
+  expect(tree).toContain(text.replace('\n', '\\n'))
+  expect(tree.split('❯').length - 1).toBe(1)
+  expect(tree.indexOf('❯')).toBeLessThan(tree.indexOf('line one'))
+})
