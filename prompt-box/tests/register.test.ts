@@ -1,4 +1,4 @@
-import { expect, test } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
 
 const ROW = (origin: object, text = 'fix the login bug') =>
   ({
@@ -48,4 +48,61 @@ test('pasted-content tags are removed from the drawn text, the pasted lines stay
   expect(tree).not.toContain('pasted_content')
   expect(tree).toContain('line 1\\nline 2')
   expect(tree).toContain('and my words')
+})
+
+const START = { cwd: '/repo', surface: 'terminal', isInteractive: true } as const
+
+function boot(on, entries: Record<string, unknown> = {}) {
+  mock.store(on, entries)
+  on('session.start', (_$, e) => ({ cwd: e.cwd }))
+  on('command.register', () => ({ value: { command: 'prompt-color' } }))
+  on('ui.render', () => ({ type: 'Text', props: {}, children: ['engine row'] }))
+}
+
+const border = async ($) => seen(await $.ui.render(ROW({ kind: 'composer' })))
+
+test('/prompt-color sets the border and chevron color and the rows redraw in it', async ($, on) => {
+  boot(on)
+  await $.session.start(START)
+  const ran = await $.command.run({ command: 'prompt-color', args: 'Red' })
+  expect(ran.text).toBe('Prompt color set to red.')
+  const tree = await border($)
+  expect(tree).toContain('"borderColor":"red"')
+  expect(tree).toContain('"color":"red"')
+})
+
+test('a hex color is accepted and kept lower case', async ($, on) => {
+  boot(on)
+  await $.session.start(START)
+  await $.command.run({ command: 'prompt-color', args: '#FF8800' })
+  expect(await border($)).toContain('"borderColor":"#ff8800"')
+})
+
+test('an unknown color is refused and the current one stays', async ($, on) => {
+  boot(on)
+  await $.session.start(START)
+  const ran = await $.command.run({ command: 'prompt-color', args: 'orange' })
+  expect(ran.text).toContain('"orange" is not a color')
+  expect(await border($)).toContain('"borderColor":"cyan"')
+})
+
+test('no argument reports the current color, reset goes back to cyan', async ($, on) => {
+  boot(on)
+  await $.session.start(START)
+  await $.command.run({ command: 'prompt-color', args: 'green' })
+  expect((await $.command.run({ command: 'prompt-color', args: '' })).text).toContain('Prompt color: green.')
+  await $.command.run({ command: 'prompt-color', args: 'reset' })
+  expect(await border($)).toContain('"borderColor":"cyan"')
+})
+
+test('the saved color is loaded at session start', async ($, on) => {
+  boot(on, { color: '#22d3ee' })
+  await $.session.start(START)
+  expect(await border($)).toContain('"borderColor":"#22d3ee"')
+})
+
+test('a bad saved value is ignored', async ($, on) => {
+  boot(on, { color: 'not-a-color' })
+  await $.session.start(START)
+  expect(await border($)).toContain('"borderColor":"cyan"')
 })

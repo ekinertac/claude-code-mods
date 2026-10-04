@@ -18,7 +18,7 @@
     {
       "name": "prompt-box",
       "source": "./prompt-box",
-      "description": "Draws your own prompts in the scrollback inside a thick colored box"
+      "description": "Draws your own prompts in the scrollback inside a thick colored box; /prompt-color sets the color"
     },
     {
       "name": "tool-oneline",
