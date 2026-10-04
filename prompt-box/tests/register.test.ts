@@ -10,11 +10,13 @@ const ROW = (origin: object, text = 'fix the login bug') =>
 
 const seen = (tree: any): string => JSON.stringify(tree)
 
-test('a typed prompt is drawn in a thick colored box with its text', async ($, on) => {
+test('a typed prompt is drawn on a Claude-orange band with black text', async ($, on) => {
   on('ui.render', (_$, e) => ({ type: 'Text', props: {}, children: ['engine row'] }))
   const tree = seen(await $.ui.render(ROW({ kind: 'composer' })))
   expect(tree).toContain('fix the login bug')
-  expect(tree).toContain('"borderStyle":"bold"')
+  expect(tree).toContain('"backgroundColor":"#D97757"')
+  expect(tree).toContain('"color":"black"')
+  expect(tree).not.toContain('borderStyle')
 })
 
 test('a task notification keeps the engine row', async ($, on) => {
