@@ -81,18 +81,35 @@ test('a hex color is accepted and kept lower case', async ($, on) => {
 test('an unknown color is refused and the current one stays', async ($, on) => {
   boot(on)
   await $.session.start(START)
-  const ran = await $.command.run({ command: 'prompt-color', args: 'orange' })
-  expect(ran.text).toContain('"orange" is not a color')
-  expect(await border($)).toContain('"borderColor":"cyan"')
+  const ran = await $.command.run({ command: 'prompt-color', args: 'teal' })
+  expect(ran.text).toContain('"teal" is not a color')
+  expect(await border($)).toContain('"borderColor":"gray"')
 })
 
-test('no argument reports the current color, reset goes back to cyan', async ($, on) => {
+test('no argument reports the current color, reset and default go back to gray', async ($, on) => {
   boot(on)
   await $.session.start(START)
   await $.command.run({ command: 'prompt-color', args: 'green' })
   expect((await $.command.run({ command: 'prompt-color', args: '' })).text).toContain('Prompt color: green.')
   await $.command.run({ command: 'prompt-color', args: 'reset' })
-  expect(await border($)).toContain('"borderColor":"cyan"')
+  expect(await border($)).toContain('"borderColor":"gray"')
+  await $.command.run({ command: 'prompt-color', args: 'blue' })
+  await $.command.run({ command: 'prompt-color', args: 'default' })
+  expect(await border($)).toContain('"borderColor":"gray"')
+})
+
+test('the default color is gray', async ($, on) => {
+  boot(on)
+  await $.session.start(START)
+  expect(await border($)).toContain('"borderColor":"gray"')
+})
+
+test('purple, orange and pink are drawn as fixed hex colors but kept by name', async ($, on) => {
+  boot(on)
+  await $.session.start(START)
+  expect((await $.command.run({ command: 'prompt-color', args: 'Orange' })).text).toBe('Prompt color set to orange.')
+  expect(await border($)).toContain('"borderColor":"#f97316"')
+  expect((await $.command.run({ command: 'prompt-color', args: '' })).text).toContain('Prompt color: orange.')
 })
 
 test('the saved color is loaded at session start', async ($, on) => {
@@ -104,5 +121,5 @@ test('the saved color is loaded at session start', async ($, on) => {
 test('a bad saved value is ignored', async ($, on) => {
   boot(on, { color: 'not-a-color' })
   await $.session.start(START)
-  expect(await border($)).toContain('"borderColor":"cyan"')
+  expect(await border($)).toContain('"borderColor":"gray"')
 })
