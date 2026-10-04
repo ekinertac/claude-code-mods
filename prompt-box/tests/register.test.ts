@@ -123,3 +123,29 @@ test('a bad saved value is ignored', async ($, on) => {
   await $.session.start(START)
   expect(await border($)).toContain('"borderColor":"gray"')
 })
+
+test('a color saved by another session shows here at the next prompt', async ($, on) => {
+  // A store the test can change from outside, as another session's /prompt-color does.
+  const file: Record<string, unknown> = {}
+  on('store.get', (_$, e) => ({ value: file[e.key] }))
+  on('store.set', (_$, e) => {
+    file[e.key] = e.value
+    return { value: undefined }
+  })
+  on('store.delete', (_$, e) => {
+    delete file[e.key]
+    return { value: undefined }
+  })
+  on('session.start', (_$, e) => ({ cwd: e.cwd }))
+  on('command.register', () => ({ value: { command: 'prompt-color' } }))
+  on('ui.render', () => ({ type: 'Text', props: {}, children: ['engine row'] }))
+  on('prompt.submit', () => ({ text: 'ok' }))
+  await $.session.start(START)
+  expect(await border($)).toContain('"borderColor":"gray"')
+  file.color = 'blue'
+  await $.prompt.submit({ text: 'hello' } as any)
+  expect(await border($)).toContain('"borderColor":"blue"')
+  delete file.color
+  await $.prompt.submit({ text: 'again' } as any)
+  expect(await border($)).toContain('"borderColor":"gray"')
+})

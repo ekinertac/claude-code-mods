@@ -13,6 +13,8 @@
 // `reset` both go back to gray. The value lives in $.state (so the rows redraw at once) and in
 // $.store (so it survives a restart). Most names are the terminal's ANSI colors and follow its
 // color scheme; purple, orange, pink and any #hex are fixed colors, because ANSI has no such hue.
+// Global: the store is one file per user, but each session keeps its own copy in $.state, so a
+// change made in one session reaches the others when they next submit a prompt (syncColor).
 // Constraint: the box costs two extra rows per prompt (top and bottom border), and it also shows in
 // the ctrl+o transcript.
 // Related: ../types/index.d.ts is the $.state contract.
@@ -61,8 +63,18 @@ async function setColor($: Engine, value: string) {
   else await $.store.set(STORE_KEY, value)
 }
 
+// Takes the saved color into this session's state, so a color set in another session shows here at
+// the next prompt without a restart. One small file read per prompt. An unset or invalid value means
+// the default.
+async function syncColor($: Engine) {
+  const saved = await $.store.get(STORE_KEY)
+  const value = (typeof saved === 'string' ? parse(saved) : null) ?? DEFAULT_COLOR
+  if (value !== (await read($, color))) await update($, color, () => value)
+}
+
 async function run($: Engine, args: string) {
   const arg = args.trim()
+  await syncColor($)
   const current = await read($, color)
   if (!arg) {
     return `Prompt color: ${current}. Use /prompt-color [${HINT}]. Also: ${NAMES.join(', ')}.`
@@ -84,9 +96,12 @@ export const register: Register = on => {
       description: 'Set the color of the box around your prompts',
       argumentHint: `[${HINT}]`,
     })
-    const saved = await $.store.get(STORE_KEY)
-    const value = typeof saved === 'string' ? parse(saved) : null
-    if (value) await update($, color, () => value)
+    await syncColor($)
+    return next(e)
+  })
+
+  on('prompt.submit', async ($, e, next) => {
+    await syncColor($)
     return next(e)
   })
 
