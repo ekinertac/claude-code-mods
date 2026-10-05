@@ -80,14 +80,15 @@ function sync($: Engine, value: boolean) {
   $.ui.invalidate('ui.render')
 }
 
-function line(Box: any, Text: any, key: string, color: string, name: string, text: string) {
+// isDim: the run summary is background information, so it recedes behind the conversation text.
+function line(Box: any, Text: any, key: string, color: string, name: string, text: string, isDim = false) {
   return (
     <Box key={key} width="100%">
       <Box flexShrink={0} marginRight={1}>
-        <Text color={color}>⏺</Text>
+        <Text color={color} dimColor={isDim}>⏺</Text>
       </Box>
       <Box flexShrink={1}>
-        <Text wrap="truncate-end">
+        <Text wrap="truncate-end" dimColor={isDim}>
           {name ? <Text bold>{name}</Text> : null}
           {text}
         </Text>
@@ -107,7 +108,7 @@ async function draw($: Engine, e: any, next: any, calls: Call[]) {
     const ids = calls.map(c => c.tool_use_id)
     const run = (await read($, runs)).find(r => r.ids.some(id => ids.includes(id)))
     if (run) {
-      return ids.includes(run.ids[0]) ? line(Box, Text, 'run', 'green', '', summary(run.tools)) : <Box display="none" />
+      return ids.includes(run.ids[0]) ? line(Box, Text, 'run', 'green', '', summary(run.tools), true) : <Box display="none" />
     }
     // A call this module never saw (a resumed session, a reload): draw it as its own line.
   }

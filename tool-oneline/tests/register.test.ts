@@ -45,6 +45,7 @@ test('a call is drawn as one line with its subject, and its result is hidden', a
   const row = seen(await $.ui.render(use('t1', 'Bash', { command: 'echo hi\nsecond line' })))
   expect(row).toContain('Bash')
   expect(row).toContain('(echo hi)')
+  expect(row).not.toContain('"wrap":"truncate-end","dimColor":true')
   expect(row).not.toContain('second line')
   expect(seen(await $.ui.render(result('t1')))).toContain('"display":"none"')
 })
@@ -71,6 +72,7 @@ test('runs: calls with no text between fold into one summary line on the first r
   const first = seen(await $.ui.render(use('c1', 'Bash', { command: 'a' })))
   const second = seen(await $.ui.render(use('c2', 'Read', { file_path: '/b' })))
   expect(first).toContain('Ran 2 tools: Bash, Read')
+  expect(first).toContain('"dimColor":true')
   expect(second).toContain('"display":"none"')
 })
 
