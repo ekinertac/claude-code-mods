@@ -149,3 +149,14 @@ test('a color saved by another session shows here at the next prompt', async ($,
   await $.prompt.submit({ text: 'again' } as any)
   expect(await border($)).toContain('"borderColor":"gray"')
 })
+
+test('the row is still passed down, so other mods see the prompt rows', async ($, on) => {
+  const beneath: string[] = []
+  on('ui.render', (_$, e) => {
+    beneath.push(e.component)
+    return { type: 'Text', props: {}, children: ['engine row'] }
+  })
+  const tree = seen(await $.ui.render(ROW({ kind: 'composer' })))
+  expect(beneath).toEqual(['UserMessage'])
+  expect(tree).toContain('borderStyle')
+})

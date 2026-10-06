@@ -13,6 +13,8 @@
 // ctrl+o: tool rows carry no "expanded" flag, so the flag is read from the UserMessage and
 // ToolGroup rows, which do, and a change invalidates ui.render. In the expanded transcript every
 // hook passes, and the engine draws full rows and results.
+// Needs: any mod that replaces the user-message row (prompt-box does) must call next(e) first, or this
+// mod never sees the flag when a turn has no tool group.
 // Constraint: a failed call keeps its error block, because a hidden failure is worse than a long one.
 // Related: ../types/index.d.ts is the $.state contract.
 

@@ -107,7 +107,11 @@ export const register: Register = on => {
 
   on('command.run', { command: 'prompt-color' }, async ($, e) => ({ text: await run($, e.args) }))
 
-  on('ui.render', { component: 'UserMessage', props: { origin: { kind: 'composer' } } }, async ($, e) => {
+  on('ui.render', { component: 'UserMessage', props: { origin: { kind: 'composer' } } }, async ($, e, next) => {
+    // Let the hooks beneath see this row too, though the drawing below replaces their result: the
+    // tool-oneline mod reads the ctrl+o "expanded" flag from user rows, and a hook that answers
+    // without next would hide every prompt from it.
+    await next(e)
     const { Box, Text } = $.ui.resolve(e)
     const name = await read($, color)
     const c = FIXED[name] ?? name
