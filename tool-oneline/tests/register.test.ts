@@ -91,3 +91,29 @@ test('runs: a call this module never saw is drawn as its own line', { options: {
   boot(on, [])
   expect(seen(await $.ui.render(use('old', 'Grep', { pattern: 'TODO' })))).toContain('(TODO)')
 })
+
+test('a shown tool keeps the engine row and its result, in both levels', async ($, on) => {
+  boot(on, [])
+  const row = seen(await $.ui.render(use('s1', 'SendUserFile', { file_path: '/tmp/a.png' })))
+  expect(row).toContain('engine row')
+  expect(seen(await $.ui.render({ ...result('s1'), props: { ...result('s1').props, tool: 'SendUserFile' } }))).toContain('engine row')
+})
+
+test('runs: a shown tool is not counted and ends the run', { options: { detail: 'runs' } }, async ($, on) => {
+  boot(on, [{ role: 'assistant', text: '' }])
+  await $.turn.start({ text: 'go', turnId: 't' })
+  await $.tool.call({ tool: 'Bash', command: 'a', tool_use_id: 'c1' } as any)
+  await $.tool.call({ tool: 'SendUserFile', file_path: '/tmp/a.png', tool_use_id: 's1' } as any)
+  await $.tool.call({ tool: 'Bash', command: 'b', tool_use_id: 'c2' } as any)
+  await $.tool.call({ tool: 'Read', file_path: '/b', tool_use_id: 'c3' } as any)
+  expect(seen(await $.ui.render(use('c1', 'Bash', { command: 'a' })))).toContain('Ran 1 tool: Bash')
+  expect(seen(await $.ui.render(use('s1', 'SendUserFile', {})))).toContain('engine row')
+  expect(seen(await $.ui.render(use('c2', 'Bash', { command: 'b' })))).toContain('Ran 2 tools: Bash, Read')
+  expect(seen(await $.ui.render(use('c3', 'Read', { file_path: '/b' })))).toContain('"display":"none"')
+})
+
+test('the show option adds tools to the shown set', { options: { show: 'Read, Edit' } }, async ($, on) => {
+  boot(on, [])
+  expect(seen(await $.ui.render(use('r1', 'Read', { file_path: '/b' })))).toContain('engine row')
+  expect(seen(await $.ui.render(use('s1', 'SendUserFile', {})))).not.toContain('engine row')
+})

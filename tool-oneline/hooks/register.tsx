@@ -15,6 +15,9 @@
 // hook passes, and the engine draws full rows and results.
 // Needs: any mod that replaces the user-message row (prompt-box does) must call next(e) first, or this
 // mod never sees the flag when a turn has no tool group.
+// Always shown: tools named in the `show` option (default SendUserFile) draw as the engine's own
+// row with their output, because that output is the point of the call. They are not counted in a
+// run and they end it, so the rows after one start a new run.
 // Constraint: a failed call keeps its error block, because a hidden failure is worse than a long one.
 // Related: ../types/index.d.ts is the $.state contract.
 
@@ -55,8 +58,9 @@ type Call = {
 // Module variables start over on a reload, which is fine: they only hold the view flag and the
 // bookkeeping of the current turn. The runs themselves live in $.state.
 let detail = 'calls'
+let shown = new Set<string>()
 let isExpanded = false
-let isNewTurn = true
+let isRunClosed = true // the next call opens a new run: a new turn, or a shown tool just drew
 let lastCount = 0 // transcript length at the previous call: what came after it is what ended or kept the run
 
 function subject(tool: string, input: unknown): string {
@@ -103,7 +107,7 @@ function line(Box: any, Text: any, key: string, color: string, name: string, tex
 }
 
 async function draw($: Engine, e: any, next: any, calls: Call[]) {
-  if (isExpanded) return next(e)
+  if (isExpanded || calls.some(c => shown.has(c.tool))) return next(e)
   const { Box, Text } = $.ui.resolve(e)
 
   if (detail === 'runs') {
@@ -125,22 +129,24 @@ async function draw($: Engine, e: any, next: any, calls: Call[]) {
 
 export const register: Register = (on, options) => {
   detail = options.detail === 'runs' ? 'runs' : 'calls'
+  shown = new Set(String(options.show ?? '').split(',').map(t => t.trim()).filter(Boolean))
 
   on('turn.start', ($, e, next) => {
-    isNewTurn = true
+    isRunClosed = true
     return next(e)
   })
 
   on('tool.call', async ($, e, next) => {
-    if (e.agentId === undefined && e.tool_use_id) {
+    if (e.agentId === undefined && shown.has(e.tool)) isRunClosed = true
+    else if (e.agentId === undefined && e.tool_use_id) {
       const id = e.tool_use_id
       const messages = await $.session.messages()
       // The transcript keeps each text block and each tool call as its own assistant message, so a
       // run ends when any assistant text was written after the previous call.
       const isTextBetween = messages.slice(lastCount).some(m => m.role === 'assistant' && m.text.trim() !== '')
       lastCount = messages.length
-      const startsRun = isNewTurn || isTextBetween
-      isNewTurn = false
+      const startsRun = isRunClosed || isTextBetween
+      isRunClosed = false
       await update($, runs, list =>
         startsRun || list.length === 0
           ? [...list, { ids: [id], tools: [e.tool] }]
@@ -158,7 +164,7 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'ToolResult' }, ($, e, next) => {
-    if (isExpanded || e.props.isErrored) return next(e)
+    if (isExpanded || e.props.isErrored || shown.has(e.props.tool)) return next(e)
     const { Box } = $.ui.resolve(e)
     return <Box display="none" />
   })

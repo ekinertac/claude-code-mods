@@ -5,7 +5,7 @@ Claude Code mods I use daily.
 - `rewrite-prompt`: press Ctrl+P and the draft in the prompt box is rewritten in place by a model (Sonnet, on your plan). Nothing is sent until you press Enter, and Ctrl+_ undoes it.
 - `write-for-me`: press Ctrl+N and the next prompt is written for you from the last 12 messages of the conversation. If the box has text, it is used as a hint ("tests too") and expanded. Nothing is sent, and Ctrl+_ undoes it.
 - `prompt-box`: the prompts you type are drawn in the scrollback inside a thick colored box instead of one `> text` line. `/prompt-color [red|blue|green|yellow|purple|orange|pink|cyan|default|#hex|reset]` sets the color, keeps it across sessions, and open sessions pick it up at their next prompt. The default is gray. Most names follow your terminal's color scheme. Purple, orange, pink and hex values are fixed. Task notifications and messages from other sessions keep their normal rows. No key binding needed.
-- `tool-oneline`: each tool call is drawn as one line (`⏺ Bash(echo hello) (ctrl+o to expand)`) with no result block under it. Set `detail` to `runs` for one line per run of calls (`⏺ Ran 3 tools: Bash ×2, Read`). Ctrl+O still shows the full rows. A failed call keeps its error text.
+- `tool-oneline`: each tool call is drawn as one line (`⏺ Bash(echo hello) (ctrl+o to expand)`) with no result block under it. Set `detail` to `runs` for one line per run of calls (`⏺ Ran 3 tools: Bash ×2, Read`). Ctrl+O still shows the full rows. A failed call keeps its error text. Tools named in the `show` option (default `SendUserFile`, comma-separated) are drawn in full with their output and end a run.
 
 ## Setup
 

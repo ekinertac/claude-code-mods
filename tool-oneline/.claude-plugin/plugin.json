@@ -2,15 +2,26 @@
   "name": "tool-oneline",
   "version": "0.1.0",
   "description": "Folds tool calls in the scrollback into one line per call, or one line per run of calls, with no result block",
-  "author": { "name": "ekinertac" },
+  "author": {
+    "name": "ekinertac"
+  },
   "types": "./types/index.d.ts",
   "userConfig": {
     "detail": {
       "type": "string",
       "title": "Detail",
       "description": "calls: one line per tool call. runs: one line per run of calls between two assistant messages.",
-      "options": ["calls", "runs"],
+      "options": [
+        "calls",
+        "runs"
+      ],
       "default": "calls"
+    },
+    "show": {
+      "type": "string",
+      "title": "Always show",
+      "description": "Tools drawn in full, with their output, and never folded into a run. Comma-separated tool names.",
+      "default": "SendUserFile"
     }
   }
 }
