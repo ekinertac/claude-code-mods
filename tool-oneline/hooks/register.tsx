@@ -6,27 +6,23 @@
 // Two levels, set by the `detail` option (plugin.json userConfig):
 //   calls (default)  one line per call:            ⏺ Bash(echo hello) (ctrl+o to expand)
 //   runs             one line per run of calls:    ⏺ Ran 3 tools: Bash ×2, Read (ctrl+o to expand)
-// A run is the calls made between two assistant messages that carry text. Rows after the first of
-// a run draw nothing, so the run costs one row and no blank lines.
-// How: ui.render hooks on ToolUse, ToolGroup and ToolResult. tool.call (main loop only) records the
-// runs in $.state, and the render hooks read them, so a growing run redraws its line.
+// A run is the calls made between two messages that carry text (the assistant's, or your prompt).
+// Rows after the first of a run draw nothing, so the run costs one row and no blank lines.
+// Always shown: tools named in the `show` option (default SendUserFile) draw as the engine's own
+// row with their output, because that output is the point of the call. They are not counted in a
+// run and they end it, so the rows after one start a new run.
+// How: ui.render hooks on ToolUse, ToolGroup and ToolResult. Runs are derived from the transcript
+// ($.session.messages) each time it grows, not remembered, so a resumed session folds its old calls
+// the same way a live one does. tool.call only asks for a redraw, because a run's line must grow
+// when the next call joins it.
 // ctrl+o: tool rows carry no "expanded" flag, so the flag is read from the UserMessage and
 // ToolGroup rows, which do, and a change invalidates ui.render. In the expanded transcript every
 // hook passes, and the engine draws full rows and results.
 // Needs: any mod that replaces the user-message row (prompt-box does) must call next(e) first, or this
 // mod never sees the flag when a turn has no tool group.
-// Always shown: tools named in the `show` option (default SendUserFile) draw as the engine's own
-// row with their output, because that output is the point of the call. They are not counted in a
-// run and they end it, so the rows after one start a new run.
 // Constraint: a failed call keeps its error block, because a hidden failure is worse than a long one.
-// Related: ../types/index.d.ts is the $.state contract.
 
-import { atom, read, update } from 'claude-code'
-import type { Engine, Register } from 'claude-code'
-
-import type { Run } from '../types'
-
-const runs = atom({ plugin: 'tool-oneline', key: 'runs' } as const, [] as Run[])
+import type { Engine, Register, SessionMessage } from 'claude-code'
 
 const HINT = ' (ctrl+o to expand)'
 
@@ -55,13 +51,14 @@ type Call = {
   isInterrupted: boolean
 }
 
-// Module variables start over on a reload, which is fine: they only hold the view flag and the
-// bookkeeping of the current turn. The runs themselves live in $.state.
+type Run = { ids: string[]; tools: string[] }
+
+// Module variables start over on a reload, which is fine: they only hold options, the view flag and
+// a cache that is rebuilt from the transcript.
 let detail = 'calls'
 let shown = new Set<string>()
 let isExpanded = false
-let isRunClosed = true // the next call opens a new run: a new turn, or a shown tool just drew
-let lastCount = 0 // transcript length at the previous call: what came after it is what ended or kept the run
+let cache: { count: number; runs: Run[] } = { count: -1, runs: [] }
 
 function subject(tool: string, input: unknown): string {
   const obj = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>
@@ -78,7 +75,34 @@ function summary(tools: string[]): string {
   return `Ran ${tools.length} ${tools.length === 1 ? 'tool' : 'tools'}: ${parts.join(', ')}`
 }
 
+// The transcript keeps each text block and each tool call as its own message, so a run ends at any
+// message with text (the model's or yours) and at a shown tool. A tool_result row has no text.
+function derive(messages: readonly SessionMessage[]): Run[] {
+  const runs: Run[] = []
+  let current: Run | null = null
+  for (const m of messages) {
+    if (m.text.trim() !== '') current = null
+    for (const u of m.role === 'assistant' ? m.toolUses : []) {
+      if (shown.has(u.tool)) {
+        current = null
+        continue
+      }
+      if (!current) runs.push((current = { ids: [], tools: [] }))
+      current.ids.push(u.tool_use_id)
+      current.tools.push(u.tool)
+    }
+  }
+  return runs
+}
+
 // Declared at the top level because `claude plugin validate` only follows `$` into such functions.
+async function runsOf($: Engine): Promise<Run[]> {
+  const messages = await $.session.messages()
+  // Messages are only appended, so the length says whether anything changed since the last build.
+  if (messages.length !== cache.count) cache = { count: messages.length, runs: derive(messages) }
+  return cache.runs
+}
+
 function sync($: Engine, value: boolean) {
   if (isExpanded === value) return
   isExpanded = value
@@ -112,11 +136,11 @@ async function draw($: Engine, e: any, next: any, calls: Call[]) {
 
   if (detail === 'runs') {
     const ids = calls.map(c => c.tool_use_id)
-    const run = (await read($, runs)).find(r => r.ids.some(id => ids.includes(id)))
+    const run = (await runsOf($)).find(r => r.ids.some(id => ids.includes(id)))
     if (run) {
       return ids.includes(run.ids[0]) ? line(Box, Text, 'run', 'green', '', summary(run.tools), true) : <Box display="none" />
     }
-    // A call this module never saw (a resumed session, a reload): draw it as its own line.
+    // A call the transcript does not hold yet (it is still being written): draw it as its own line.
   }
 
   const rows = calls.map((c, i) => {
@@ -131,28 +155,9 @@ export const register: Register = (on, options) => {
   detail = options.detail === 'runs' ? 'runs' : 'calls'
   shown = new Set(String(options.show ?? '').split(',').map(t => t.trim()).filter(Boolean))
 
-  on('turn.start', ($, e, next) => {
-    isRunClosed = true
-    return next(e)
-  })
-
-  on('tool.call', async ($, e, next) => {
-    if (e.agentId === undefined && shown.has(e.tool)) isRunClosed = true
-    else if (e.agentId === undefined && e.tool_use_id) {
-      const id = e.tool_use_id
-      const messages = await $.session.messages()
-      // The transcript keeps each text block and each tool call as its own assistant message, so a
-      // run ends when any assistant text was written after the previous call.
-      const isTextBetween = messages.slice(lastCount).some(m => m.role === 'assistant' && m.text.trim() !== '')
-      lastCount = messages.length
-      const startsRun = isRunClosed || isTextBetween
-      isRunClosed = false
-      await update($, runs, list =>
-        startsRun || list.length === 0
-          ? [...list, { ids: [id], tools: [e.tool] }]
-          : list.map((r, i) => (i === list.length - 1 ? { ids: [...r.ids, id], tools: [...r.tools, e.tool] } : r)),
-      )
-    }
+  // A new call may join a run, so its line has to be drawn again.
+  on('tool.call', ($, e, next) => {
+    if (e.agentId === undefined) $.ui.invalidate('ui.render')
     return next(e)
   })
 

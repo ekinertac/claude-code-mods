@@ -5,7 +5,6 @@
   "author": {
     "name": "ekinertac"
   },
-  "types": "./types/index.d.ts",
   "userConfig": {
     "detail": {
       "type": "string",
