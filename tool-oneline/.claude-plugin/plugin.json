@@ -9,10 +9,11 @@
     "detail": {
       "type": "string",
       "title": "Detail",
-      "description": "calls: one line per tool call. runs: one line per run of calls between two assistant messages.",
+      "description": "calls: one line per tool call. runs: one line per run of calls between two assistant messages. default: no folding, Claude Code's own rows.",
       "options": [
         "calls",
-        "runs"
+        "runs",
+        "default"
       ],
       "default": "calls"
     },

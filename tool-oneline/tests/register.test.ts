@@ -120,3 +120,14 @@ test('the show option adds tools to the shown set', { options: { show: 'Read, Ed
   expect(seen(await $.ui.render(use('r1', 'Read', { file_path: '/b' })))).toContain('engine row')
   expect(seen(await $.ui.render(use('s1', 'SendUserFile', {})))).not.toContain('engine row')
 })
+
+test('default: the mod folds nothing, calls and results keep the engine rows', { options: { detail: 'default' } }, async ($, on) => {
+  boot(on, [call('a', 'Bash'), call('b', 'Bash')])
+  expect(seen(await $.ui.render(use('a', 'Bash', { command: 'ls' })))).toContain('engine row')
+  expect(seen(await $.ui.render(result('a')))).toContain('engine row')
+})
+
+test('an unknown detail value falls back to calls', { options: { detail: 'bogus' } }, async ($, on) => {
+  boot(on)
+  expect(seen(await $.ui.render(use('t1', 'Bash', { command: 'ls' })))).toContain('(ls)')
+})

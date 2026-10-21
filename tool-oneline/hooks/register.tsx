@@ -3,9 +3,11 @@
 // Why: a tool call normally takes a header, up to several result lines and a "+N lines" row, and a
 // long agent turn buries the conversation text in that output. The stored results and what the
 // model reads do not change.
-// Two levels, set by the `detail` option (plugin.json userConfig):
+// Three levels, set by the `detail` option (plugin.json userConfig):
 //   calls (default)  one line per call:            ⏺ Bash(echo hello) (ctrl+o to expand)
 //   runs             one line per run of calls:    ⏺ Ran 3 tools: Bash ×2, Read (ctrl+o to expand)
+//   default          the mod folds nothing: the engine draws its own full rows and results, so the
+//                    mod can stay installed while its look is switched off
 // A run is the calls made between two messages that carry text (the assistant's, or your prompt).
 // Rows after the first of a run draw nothing, so the run costs one row and no blank lines.
 // Always shown: tools named in the `show` option (default SendUserFile) draw as the engine's own
@@ -131,7 +133,7 @@ function line(Box: any, Text: any, key: string, color: string, name: string, tex
 }
 
 async function draw($: Engine, e: any, next: any, calls: Call[]) {
-  if (isExpanded || calls.some(c => shown.has(c.tool))) return next(e)
+  if (detail === 'default' || isExpanded || calls.some(c => shown.has(c.tool))) return next(e)
   const { Box, Text } = $.ui.resolve(e)
 
   if (detail === 'runs') {
@@ -152,7 +154,7 @@ async function draw($: Engine, e: any, next: any, calls: Call[]) {
 }
 
 export const register: Register = (on, options) => {
-  detail = options.detail === 'runs' ? 'runs' : 'calls'
+  detail = options.detail === 'runs' || options.detail === 'default' ? options.detail : 'calls'
   shown = new Set(String(options.show ?? '').split(',').map(t => t.trim()).filter(Boolean))
 
   // A new call may join a run, so its line has to be drawn again.
@@ -169,7 +171,7 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'ToolResult' }, ($, e, next) => {
-    if (isExpanded || e.props.isErrored || shown.has(e.props.tool)) return next(e)
+    if (detail === 'default' || isExpanded || e.props.isErrored || shown.has(e.props.tool)) return next(e)
     const { Box } = $.ui.resolve(e)
     return <Box display="none" />
   })
