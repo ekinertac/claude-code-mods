@@ -2,3 +2,6 @@
 .claude-plugin/types/
 tsconfig.json
 node_modules/
+
+# mkdown artifacts (auto-managed)
+README.html
