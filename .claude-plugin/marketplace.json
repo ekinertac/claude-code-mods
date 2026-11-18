@@ -24,6 +24,11 @@
       "name": "tool-oneline",
       "source": "./tool-oneline",
       "description": "Folds tool calls in the scrollback into one line per call, or one line per run of calls"
+    },
+    {
+      "name": "subagent-router",
+      "source": "./subagent-router",
+      "description": "Picks a model for each subagent from its task, small for lookups and large for hard work; /subagent-router switches it on or off"
     }
   ]
 }

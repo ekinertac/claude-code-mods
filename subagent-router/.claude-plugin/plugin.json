@@ -1,0 +1,41 @@
+{
+  "name": "subagent-router",
+  "version": "0.1.0",
+  "description": "Picks a model for each subagent from its task: small models for lookups, big models for hard work, while the main thread keeps its own model",
+  "author": {
+    "name": "ekinertac"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "small": {
+      "type": "string",
+      "title": "Small tasks",
+      "description": "Model for search, reading, listing, summaries and mechanical edits. An alias (haiku) or a full model id.",
+      "default": "haiku"
+    },
+    "medium": {
+      "type": "string",
+      "title": "Medium tasks",
+      "description": "Model for a well-scoped change, tests or a code review.",
+      "default": "sonnet"
+    },
+    "large": {
+      "type": "string",
+      "title": "Large tasks",
+      "description": "Model for design, hard debugging, security review or a change that needs judgment across many files.",
+      "default": "opus"
+    },
+    "classifier": {
+      "type": "string",
+      "title": "Classifier",
+      "description": "Model that reads the task and picks small, medium or large. One short call for each subagent.",
+      "default": "haiku"
+    },
+    "types": {
+      "type": "string",
+      "title": "Routed agent types",
+      "description": "Subagent types the router decides for, comma-separated. Other types keep the model their own definition sets.",
+      "default": "general-purpose"
+    }
+  }
+}
